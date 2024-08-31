@@ -1,11 +1,13 @@
 const express = require('express');
 // const bcrypt = require('bcrypt')
 const bcrypt = require('bcrypt-nodejs');
-const cors = require('cors')
+const cors = require('cors');
 const knex = require('knex');
 
-const register = require('./Controllers/register')
-const signin = require('./Controllers/signin')
+const register = require('./Controllers/register');
+const signin = require('./Controllers/signin');
+
+// Initialize Knex with PostgreSQL connection details
 const db = knex({
   client: 'pg',
   connection: {
@@ -17,36 +19,36 @@ const db = knex({
   }
 });
 
-
 const app = express();
 
-app.use(express.json())//using middleware
+app.use(express.json()); // Middleware for parsing JSON bodies
 app.use(cors());
 
+// Corrected route to use the defined 'db' variable
 app.get('/', (req, res) => {
-  res.send(database.user);
-})
+  db.select('*').from('users') // Replace 'database.user' with 'db.select...'
+    .then(users => {
+      res.json(users);
+    })
+    .catch(err => res.status(400).json('Unable to fetch users'));
+});
 
-app.post('/signin', (req, res) => { signin.handlesignin(req, res, db, bcrypt) })
+app.post('/signin', (req, res) => { signin.handlesignin(req, res, db, bcrypt); });
 
-
-app.post('/register', (req, res) => { register.handleRegister(req, res, db, bcrypt) })
-
-
+app.post('/register', (req, res) => { register.handleRegister(req, res, db, bcrypt); });
 
 app.get('/profile/:id', (req, res) => {
-  const { id } = req.params; // const id = req.params.id
+  const { id } = req.params;
   db.select('*').from('users').where({ id })
     .then(user => {
-      console.log(user)
-      if (user.length >= 1) {
-        res.json(user[0])
+      if (user.length) {
+        res.json(user[0]);
       } else {
-        res.status(400).json('not found!')
+        res.status(400).json('Not found!');
       }
     })
-    .catch(err => res.status(400).json('bad request'))
-})
+    .catch(err => res.status(400).json('Bad request'));
+});
 
 app.put('/image', (req, res) => {
   const { id } = req.body;
@@ -56,8 +58,9 @@ app.put('/image', (req, res) => {
     .then(entries => {
       res.json(entries[0]);
     })
-    .catch(err => res.status(400).json('umable to request'))
-})
+    .catch(err => res.status(400).json('Unable to request'));
+});
+
 app.listen(3000, () => {
-  console.log("it's working")
-})
+  console.log("Server is running on port 3000");
+});
